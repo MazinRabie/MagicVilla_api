@@ -14,13 +14,14 @@ namespace MagicVilla_WebApi.Controllers
     {
         private readonly IVillaNumberRepo _repo;
         private readonly IMapper _mapper;
+        private readonly IVillaRepo _vRepo;
         private readonly ApiResponse _response = new();
 
-        public VillaNumberApiController(IVillaNumberRepo repo, IMapper mapper)
+        public VillaNumberApiController(IVillaNumberRepo repo, IMapper mapper, IVillaRepo vRepo)
         {
             _repo = repo;
             _mapper = mapper;
-
+            _vRepo = vRepo;
         }
 
 
@@ -53,9 +54,20 @@ namespace MagicVilla_WebApi.Controllers
             {
                 return BadRequest("number already exists");
             }
+            if (await _vRepo.Get(x => x.Id == villaNoDto.VillaId) == null)
+            {
+                ModelState.AddModelError("invalid villa id", "villa does not exist");
+
+                return BadRequest(modelState: ModelState);
+            }
+            if (await _repo.Get(x => x.VillaId == villaNoDto.VillaId) != null)
+            {
+                ModelState.AddModelError("invalid villa id", "another villa number has that villa id");
+                return BadRequest(ModelState);
+            }
             var villaobj = _mapper.Map<VillaNumber>(villaNoDto);
             await _repo.Create(villaobj);
-            _response.Result = villaobj;
+            _response.Result = villaNoDto;
             _response.StatusCode = HttpStatusCode.Created;
             return Ok(_response);
         }
@@ -67,7 +79,7 @@ namespace MagicVilla_WebApi.Controllers
             var deleted = await _repo.Get(x => x.VillaNo == vNo);
             if (deleted == null) return NotFound();
             await _repo.Remove(deleted);
-            _response.Result = deleted;
+            _response.Result = _mapper.Map<VillaNumberDTO>(deleted);
             _response.StatusCode = HttpStatusCode.NoContent;
             return Ok(_response);
         }
@@ -76,6 +88,17 @@ namespace MagicVilla_WebApi.Controllers
         public async Task<ActionResult<ApiResponse>> Update([FromRoute] int No, [FromBody] VillaNumberUpdateDTO villaNoDto)
         {
             if (await _repo.Get(x => x.VillaNo == No, false) == null) return NotFound();
+            if (await _vRepo.Get(x => x.Id == villaNoDto.VillaId) == null)
+            {
+                ModelState.AddModelError("", "invalid villa id");
+                return BadRequest(ModelState);
+            }
+            var villaExist = await _repo.Get(x => x.VillaId == villaNoDto.VillaId, false);
+            if (villaExist != null && villaExist.VillaNo != No)
+            {
+                ModelState.AddModelError("", "some other villaNumber has that villa id already");
+                return BadRequest(ModelState);
+            }
             if (No != villaNoDto.VillaNo) return BadRequest();
             var newVillaNo = _mapper.Map<VillaNumber>(villaNoDto);
             await _repo.Update(newVillaNo);
