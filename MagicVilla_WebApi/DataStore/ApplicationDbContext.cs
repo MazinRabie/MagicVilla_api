@@ -10,6 +10,7 @@ namespace MagicVilla_WebApi.DataStore
         }
 
         public DbSet<Villa> Villas { get; set; }
+        public DbSet<VillaNumber> VillaNumbers { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -19,7 +20,7 @@ namespace MagicVilla_WebApi.DataStore
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            #region seedVillas
             modelBuilder.Entity<Villa>().HasData(
               new Villa
               {
@@ -82,6 +83,8 @@ namespace MagicVilla_WebApi.DataStore
                   CreatedDate = DateTime.Now
               }
                 );
+            #endregion
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         }
 
     }

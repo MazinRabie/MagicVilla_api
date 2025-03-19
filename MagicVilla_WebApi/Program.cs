@@ -1,6 +1,8 @@
 
 using MagicVilla_WebApi.DataStore;
 using MagicVilla_WebApi.Logging;
+using MagicVilla_WebApi.Repository;
+using MagicVilla_WebApi.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
 
 namespace MagicVilla_WebApi
@@ -18,6 +20,8 @@ namespace MagicVilla_WebApi
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<ILogging, Logging.Logging>();
+            builder.Services.AddScoped<IVillaRepo, VillaRepo>();
+            builder.Services.AddScoped<IVillaNumberRepo, VillaNumberRepo>();
             builder.Services.AddAutoMapper(typeof(MappingConfig));
             builder.Services.AddDbContext<ApplicationDbContext>(op =>
             {
